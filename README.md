@@ -8,4 +8,4 @@ Um sistema para gerenciamento de reservas de salas para professores em uma insti
 *** CHANGELOG ***
 
 - Adicionados os tratamentos de exceção ...
-- Atualizada documentação do Insmonia
+- Pull requests testados
