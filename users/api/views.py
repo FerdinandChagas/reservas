@@ -2,9 +2,10 @@ import logging
 from django.contrib.auth.models import User, Group
 from rest_framework.exceptions import PermissionDenied, NotAuthenticated
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
+from users.api.permissions import IsProfessor
 from users.api.serializers import ProfessorCreateSerializer, ProfessorSerializer, UserProfileExampleSerializer
 
 from users.models import Professor, UserProfileExample
@@ -23,8 +24,15 @@ class UserProfileExampleViewSet(ModelViewSet):
 class ProfessorViewSet(ModelViewSet):
     """ViewSet para manipulação das entidades do tipo Professor"""
     serializer_class = ProfessorSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     queryset = Professor.objects.all()
+
+    def get_permissions(self):
+        if self.action in ['update','partial_update','destroy']:
+            return [IsProfessor()]
+        elif self.action == 'list':
+            return [IsAdminUser()]
+        return super().get_permissions()
 
     def create(self, request, *args, **kwargs):
         serializer = ProfessorCreateSerializer(data=request.data)

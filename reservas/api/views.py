@@ -6,11 +6,12 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, NotAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from reservas.api.serializers import ReservaSerializer, SalaSerializer
 from reservas.models import ReservaModel, SalaModel
 from users.api.permissions import IsProfessor
+from users.models import Professor
 
 logger = logging.getLogger("reservas")
 
@@ -20,6 +21,13 @@ class SalaViewSet(ModelViewSet):
     serializer_class = SalaSerializer
     permission_classes = [IsAuthenticated]
     queryset = SalaModel.objects.all()
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [IsProfessor()] or [IsAdminUser()]
+        elif self.action in ['create','update', 'partial_update', 'destroy']:
+            return [IsAdminUser()]
+        return super().get_permissions()
 
     def create(self, request, *args, **kwargs):
         serializer = SalaSerializer(data=request.data)
@@ -107,7 +115,7 @@ class SalaViewSet(ModelViewSet):
 class ReservaViewSet(ModelViewSet):
     """ ViewSet para manipulação de instâncias de Reserva """
     serializer_class = ReservaSerializer
-    permission_classes = [IsProfessor]
+    permission_classes = [IsAuthenticated]
     queryset = ReservaModel.objects.all()
 
     def create(self, request, *args, **kwargs):
@@ -124,11 +132,13 @@ class ReservaViewSet(ModelViewSet):
                 hora_inicio__lt=hora_fim,
                 hora_fim__gt=hora_inicio).exists()
 
+            professor = Professor.objects.get(user=request.user)
             if sala_existe and not in_conflict:
                 nova_reserva = ReservaModel.objects.create(
                     sala_numero=serializer.validated_data['sala_numero'],
                     hora_inicio=serializer.validated_data['hora_inicio'],
-                    hora_fim=serializer.validated_data['hora_fim']
+                    hora_fim=serializer.validated_data['hora_fim'],
+                    professor=professor
                 )
 
                 serializer_saida = ReservaSerializer(nova_reserva)
@@ -140,6 +150,10 @@ class ReservaViewSet(ModelViewSet):
                 return Response(
                     {"Info": "Falha ao tentar cadastrar reserva!"},
                     status=status.HTTP_409_CONFLICT)
+        except Professor.DoesNotExist:
+            return Response(
+                {"Erro": "Apenas professores podem fazer reservas."},
+                status=status.HTTP_403_FORBIDDEN)
         except ValueError:
             logger.error("Entrada inválida.")
             return Response(

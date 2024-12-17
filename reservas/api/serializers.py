@@ -12,4 +12,4 @@ class ReservaSerializer(ModelSerializer):
 
     class Meta:
         model = ReservaModel
-        fields = "__all__"
+        fields = ['sala_numero', 'hora_inicio', 'hora_fim']

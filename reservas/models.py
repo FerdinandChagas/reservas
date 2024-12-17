@@ -1,6 +1,8 @@
 """ Modelos de entidades para reserva de salas """
 from django.db import models
 
+from users.models import Professor
+
 # Create your models here.
 
 
@@ -26,6 +28,7 @@ class ReservaModel(models.Model):
     sala_numero = models.IntegerField()
     hora_inicio = models.DateTimeField()
     hora_fim = models.DateTimeField()
+    professor = models.ForeignKey(Professor, on_delete=models.CASCADE, null=True, related_name="reservas")
 
     def __str__(self):
         return f'Reserva - Sala[{self.sala_numero}] - [{self.hora_inicio}]'
