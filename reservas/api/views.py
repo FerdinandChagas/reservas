@@ -23,9 +23,7 @@ class SalaViewSet(ModelViewSet):
     queryset = SalaModel.objects.all()
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            return [IsProfessor()] or [IsAdminUser()]
-        elif self.action in ['create','update', 'partial_update', 'destroy']:
+        if self.action in ['create','update', 'partial_update', 'destroy']:
             return [IsAdminUser()]
         return super().get_permissions()
 
