@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from reservas.api.serializers import ReservaSerializer, SalaSerializer
 from reservas.models import ReservaModel, SalaModel
+from reservas.services import SalaService
 from users.api.permissions import IsProfessor
 from users.models import Professor
 
@@ -21,6 +22,7 @@ class SalaViewSet(ModelViewSet):
     serializer_class = SalaSerializer
     permission_classes = [IsAuthenticated]
     queryset = SalaModel.objects.all()
+    service = SalaService()
 
     def get_permissions(self):
         if self.action in ['create','update', 'partial_update', 'destroy']:
@@ -32,30 +34,14 @@ class SalaViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         try:
-            numero = serializer.validated_data['numero']
-            bloco = serializer.validated_data['bloco']
+            nova_sala = self.service.create(data=serializer.validated_data)
 
-            in_database = SalaModel.objects.filter(
-                 numero=numero,
-                 bloco=bloco).exists()
-
-            if in_database:
-                raise ValueError
-            else:
-                nova_sala = SalaModel.objects.create(
-                    numero=serializer.validated_data['numero'],
-                    bloco=serializer.validated_data['bloco'],
-                    capacidade=serializer.validated_data['capacidade'],
-                    tipo=serializer.validated_data['tipo'],
-                    disponivel=serializer.validated_data['disponivel']
-                )
-
-                serializer_saida = SalaSerializer(nova_sala)
-                logger.info("Sala Criada!")
-                return Response(
-                    {"Info": "Sala criada!",
-                     "data": serializer_saida.data},
-                    status=status.HTTP_201_CREATED)
+            serializer_saida = SalaSerializer(nova_sala)
+            logger.info("Sala Criada!")
+            return Response(
+                {"Info": "Sala criada!",
+                    "data": serializer_saida.data},
+                status=status.HTTP_201_CREATED)
 
         except KeyError:
             return Response(
@@ -71,6 +57,10 @@ class SalaViewSet(ModelViewSet):
                 {"Info": "A sala já foi cadastrada antes!"},
                 status=status.HTTP_409_CONFLICT)
         except Exception:
+            return Response(
+                {"Erro": "Comportamento Inesperado."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
             return Response(
                 {"Erro": "Comportamento Inesperado."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -9,6 +9,7 @@ from users.api.permissions import IsProfessor
 from users.api.serializers import ProfessorCreateSerializer, ProfessorSerializer, UserProfileExampleSerializer
 
 from users.models import Professor, UserProfileExample
+from users.services import ProfessorService
 
 logger = logging.getLogger("reservas")
 
@@ -26,6 +27,7 @@ class ProfessorViewSet(ModelViewSet):
     serializer_class = ProfessorSerializer
     permission_classes = [IsAuthenticated]
     queryset = Professor.objects.all()
+    service = ProfessorService()
 
     def get_permissions(self):
         if self.action in ['update','partial_update','destroy']:
@@ -39,19 +41,7 @@ class ProfessorViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         try:
-            novo_user = User.objects.create_user(
-                username=serializer.validated_data['login'],
-                password=serializer.validated_data['senha'],
-            )
-            grupo_professores = Group.objects.get(name="Professores")
-            novo_user.groups.add(grupo_professores)
-
-            novo_professor = Professor.objects.create(
-                nome=serializer.validated_data['nome'],
-                matricula=serializer.validated_data['matricula'],
-                departamento=serializer.validated_data['departamento'],
-                user=novo_user
-            )
+            novo_professor = self.service.create(serializer.validated_data)
 
             serializer_saida = ProfessorSerializer(novo_professor)
             return Response(
