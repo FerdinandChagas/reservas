@@ -1,0 +1,56 @@
+@startuml
+class SalaModel {
+    +numero: Integer
+    +bloco: Integer
+    +capacidade: Integer
+    +tipo: CharField(max_length=20)
+    +disponivel: Boolean = True
+    --
+    +__str__(): String
+}
+
+class ReservaModel {
+    +sala: ForeignKey(SalaModel, on_delete=CASCADE)
+    +hora_inicio: DateTimeField
+    +hora_fim: DateTimeField
+    +professor: ForeignKey(Professor, on_delete=CASCADE, null=True, related_name="reservas")
+    --
+    +__str__(): String
+}
+
+class Professor {
+    +nome: CharField(max_length=140)
+    +matricula: CharField(max_length=12)
+    +departamento: CharField(max_length=140)
+    +user: OneToOneField(User, on_delete=CASCADE)
+    --
+    +__str__(): String
+}
+
+class MetaSala {
+    +verbose_name: String = "Sala"
+    +verbose_name_plural: String = "Salas"
+}
+
+class MetaReserva {
+    +verbose_name: String = "Reserva"
+    +verbose_name_plural: String = "Reservas"
+}
+
+class MetaProfessor {
+    +verbose_name: String = "Professor"
+    +verbose_name_plural: String = "Professores"
+}
+
+class User {
+    +username: CharField
+    +password: CharField
+}
+
+SalaModel ..> MetaSala : "<<meta>>"
+ReservaModel ..> MetaReserva : "<<meta>>"
+Professor ..> MetaProfessor : "<<meta>>"
+ReservaModel --> Professor : "+professor"
+ReservaModel --> SalaModel : "+sala"
+Professor --> User : "+user"
+@enduml

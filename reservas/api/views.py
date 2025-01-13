@@ -6,9 +6,9 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, NotAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 
-from reservas.api.serializers import ReservaSerializer, SalaSerializer
+from reservas.api.serializers import BuscarSalaSerializer, ReservaSerializer, SalaSerializer
 from reservas.models import ReservaModel, SalaModel
 from reservas.services import SalaService
 from users.api.permissions import IsProfessor
@@ -60,26 +60,23 @@ class SalaViewSet(ModelViewSet):
             return Response(
                 {"Erro": "Comportamento Inesperado."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-            return Response(
-                {"Erro": "Comportamento Inesperado."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
     # from rest_framework.decorators import action
-    # http://localhost:8000/salas/buscar/?sala=12&bloco=2
-    @action(methods=['get'], detail=False, url_path="buscar")
+    # http://localhost:8000/salas/buscar/?sala=12
+    @action(methods=['post'], detail=False, url_path="buscar")
     def buscar_sala(self, request):
         """Método para buscar salas"""
-        try:
-            numero_sala = request.GET.get("sala")
-            numero_bloco = request.GET.get("bloco")
-            busca = SalaModel.objects.filter(
-                numero=numero_sala, 
-                bloco=numero_bloco)
+        serializer_input = BuscarSalaSerializer(data=request.data)
+        serializer_input.is_valid(raise_exception=True)
 
-            serializer = SalaSerializer(busca, many=True)
+        id_sala = serializer_input.validated_data['sala']
+        try:
+            sala = SalaModel.objects.filter(id=id_sala).first()
+
+            serializer = SalaSerializer(sala)
             return Response(
-                {"Info": "Lista de Salas", "data": serializer.data},
+                {"Info": "Sala Encontrada!", "data": serializer.data},
                 status=status.HTTP_200_OK)
         except ValueError:
             logger.error("Entrada inválida.")
@@ -103,7 +100,7 @@ class SalaViewSet(ModelViewSet):
 class ReservaViewSet(ModelViewSet):
     """ ViewSet para manipulação de instâncias de Reserva """
     serializer_class = ReservaSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     queryset = ReservaModel.objects.all()
 
     def create(self, request, *args, **kwargs):
@@ -159,3 +156,11 @@ class ReservaViewSet(ModelViewSet):
             return Response(
                 {"Erro": "Usuário não autenticado."},
                 status=status.HTTP_401_UNAUTHORIZED)
+
+    def list(self, request, *args, **kwargs):
+        if request.user.is_superuser:
+            return super().list(request, args, kwargs)
+        else:
+            reservas = ReservaModel.objects.filter(professor__user=request.user)
+            serializer = ReservaSerializer(reservas, many=True)
+            return Response({"Reservas": serializer.data}, status=status.HTTP_200_OK)

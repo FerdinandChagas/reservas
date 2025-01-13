@@ -1,0 +1,38 @@
+@startuml
+class Sala {
+    +numero: Integer
+    +bloco: Integer
+    +capacidade: Integer
+    +tipo: String
+    +disponivel: Boolean
+    --
+    +toString(): String
+}
+
+class Reserva {
+    +horaInicio: DateTime
+    +horaFim: DateTime
+    +professor: Professor
+    +sala: Sala
+    --
+    +toString(): String
+}
+
+class Professor {
+    +nome: String
+    +matricula: String
+    +departamento: String
+    +usuario: Usuario
+    --
+    +toString(): String
+}
+
+class Usuario {
+    +username: String
+    +password: String
+}
+
+Reserva --> Sala : "+sala"
+Reserva --> Professor : "+professor"
+Professor --> Usuario : "+usuario"
+@enduml

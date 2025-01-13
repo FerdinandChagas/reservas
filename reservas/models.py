@@ -1,4 +1,5 @@
 """ Modelos de entidades para reserva de salas """
+import uuid
 from django.db import models
 
 from users.models import Professor
@@ -8,6 +9,7 @@ from users.models import Professor
 
 class SalaModel(models.Model):
     """Modelo que representa a sala"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     numero = models.IntegerField()
     bloco = models.IntegerField()
     capacidade = models.IntegerField()
