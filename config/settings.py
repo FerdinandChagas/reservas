@@ -10,7 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
-import sentry_sdk
+
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -158,16 +158,3 @@ LOGGING = {
     "root": {"level": "INFO", "handlers": ["console"]},
 }
 
-## Sentry Settings
-sentry_sdk.init(
-    dsn="https://c618464550d55862ff5751bc726a7f52@o4508266015096832.ingest.us.sentry.io/4508457920036864",
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for tracing.
-    traces_sample_rate=1.0,
-    _experiments={
-        # Set continuous_profiling_auto_start to True
-        # to automatically start the profiler on when
-        # possible.
-        "continuous_profiling_auto_start": True,
-    },
-)
